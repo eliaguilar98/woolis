@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="pos_order_payment_method_search" model="ir.ui.view">
+        <field name="name">pos.order.payment.method.search</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='status']" position="after">
+                <filter string="Metodo de pago" name="payment_method_id" domain="[]" context="{'group_by': 'payment_method_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

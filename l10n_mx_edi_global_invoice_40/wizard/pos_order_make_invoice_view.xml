@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_order_invoice_global_form" model="ir.ui.view">
+        <field name="name">Factura Global</field>
+        <field name="model">pos.order.make.inv</field>
+        <field name="arch" type="xml">
+            <form string="Factura Global">
+                <p class="oe_grey">
+                    Las facturas se crearán como borrador para que pueda revisarlas antes de validarlas.
+                </p>
+                <group>
+                    <field name="pos_order_ids" invisible="1"/>
+                    <field name="count" attrs="{'invisible': [('count', '=', 1)]}" string="Numero de órdenes"/>
+                    <field name="periodicidad" string="Periodicidad" readonly="1"/>
+                    <field name="meses" string="Mes"/>
+                    <field name="year" string="Año" readonly="1"/>
+                    <field name="product_id" string="Producto a utilizar" readonly="1"/>
+                    <field name="l10n_mx_edi_payment_method_id" string="Metodo de pago" readonly="1"/>
+                    <field name="journal_id" string="Diario" readonly="1"/>
+                    <field name="partner_id" string="Cliente" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="create_invoices" type="object"
+                        id="create_invoice_open"
+                        string="Crear y ver factura"
+                        class="btn-primary" data-hotkey="q"/>
+
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_view_pos_order_inv_global" model="ir.actions.act_window">
+        <field name="name">Crear Factura Global</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">pos.order.make.inv</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+</odoo>

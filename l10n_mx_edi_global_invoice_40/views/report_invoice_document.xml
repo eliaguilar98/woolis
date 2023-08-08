@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- QWeb Reports -->
+    <template id="report_invoice_document_mx" inherit_id="account.report_invoice_document">
+        <!-- Add Moneda a la factura -->
+        <xpath expr="//div[hasclass('mt-5')]" position="attributes">
+            <attribute name="style">margin-top:0rem !important;</attribute>
+        </xpath>
+
+        <xpath expr="//div[@name='reference']" position="before">
+            <div class="col-auto col-3 mw-100 mb-2" t-if="o.currency_id" name="moneda">
+                <strong>Moneda:</strong>
+                <p t-esc="o.currency_id.name"/>
+            </div>
+        </xpath>
+
+
+    </template>
+</odoo>
