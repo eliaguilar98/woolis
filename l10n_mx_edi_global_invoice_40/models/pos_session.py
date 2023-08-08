@@ -32,15 +32,16 @@ class PosSessionInherit(models.Model):
                     else:
                         forma_pago[l.payment_method_id.id] = l.amount
             forma_pago_sort = sorted(forma_pago, reverse=True)
-            l10n_mx_edi_payment_method_id = forma_pago_sort[0]
+            _logger.info("## forma pago %s",forma_pago_sort[0])
+            l10n_mx_edi_payment_method_id = self.env['pos.payment.method'].browse(forma_pago_sort[0]).payment_method_c
             if l10n_mx_edi_payment_method_id:
                 return l10n_mx_edi_payment_method_id
             return False
 
     def make_invoice_global_with_uninvoiced_orders(self):
-        orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')])
+        orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid'),('amount_total','>',0)])
         pos_config =self.config_id
-        if pos_config and pos_config.product_global_id and pos_config.partner_global_id and pos_config.journal_global_id and pos_config.active_facturacion_global:
+        if pos_config and pos_config.product_global_id and pos_config.partner_global_id and pos_config.journal_global_id and pos_config.active_facturacion_global and orders and len(orders)>0:
             data_create = {
                 'move_type': "out_invoice",
                 'partner_id': pos_config.partner_global_id.id,
@@ -75,7 +76,11 @@ class PosSessionInherit(models.Model):
                             lines_groups_tax[impuesto_0.id] = [linea_pos]
 
                 for key in lines_groups_tax.keys():
-                    amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
+                    impuesto = self.env['account.tax'].browse(key)
+                    if impuesto and impuesto.price_include:
+                        amount_total = sum([line_pos.price_subtotal_incl for line_pos in lines_groups_tax[key]])
+                    else:
+                        amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
                     data = {
                         'product_id': pos_config.product_global_id.id,
                         'name': line.name,

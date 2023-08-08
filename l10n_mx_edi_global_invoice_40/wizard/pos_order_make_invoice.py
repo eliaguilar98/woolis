@@ -150,7 +150,7 @@ class PosOrderMakeInv(models.TransientModel):
                         forma_pago[l.payment_method_id.id] = l.amount
             forma_pago_sort = sorted(forma_pago, reverse=True)
             _log.info("Forma de pago %s", forma_pago_sort)
-            wizard.l10n_mx_edi_payment_method_id = forma_pago_sort[0]
+            wizard.l10n_mx_edi_payment_method_id = forma_pago_sort[0].payment_method_c
 
 
     #=== ACTION METHODS ===#
@@ -163,7 +163,6 @@ class PosOrderMakeInv(models.TransientModel):
             for order in orders_incorrectas:
                 str_incorrectas += "\t" + str(order.name) + "\n"
             raise ValidationError(_("¡Advertencia!, No se puede completar la operacion por que las siguientes ordenes no estan en estado pagado\n %s",str_incorrectas))
-
 
         data_create = {
             'move_type': "out_invoice",
@@ -198,10 +197,16 @@ class PosOrderMakeInv(models.TransientModel):
                         lines_groups_tax[impuesto_0.id] = [linea_pos]
 
             for key in lines_groups_tax.keys():
-                amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
+                impuesto= self.env['account.tax'].browse(key)
+                _log.info("IMPUESTO %s",impuesto.name)
+                if impuesto and impuesto.price_include:
+                    amount_total = sum([line_pos.price_subtotal_incl for line_pos in lines_groups_tax[key]])
+                else:
+                    amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
                 data = {
                     'product_id': self.product_id.id,
                     'name': line.name,
+                    'product_uom_id':self.product_id.uom_id.id,
                     'quantity': 1,
                     'price_unit': amount_total,
                     'tax_ids': [(6, 0, [key])],
