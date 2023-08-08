@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="res_config_settings_inv_global_form" model="ir.ui.view">
+        <field name="name">res.config.settings.inv.global.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@id='invoicing_settings']" position="inside">
+
+                <div class="col-12 col-lg-6 o_setting_box">
+                    <div class="o_setting_right_pane">
+                        <label for="product_inv_global_id"/>
+                        <div class="text-muted">
+                            Producto para Factura Global
+                        </div>
+                        <div class="content-group">
+                            <div class="mt16">
+                                <field name="product_inv_global_id" class="o_light_label"
+                                       modifiers="{&quot;required&quot;: true}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 o_setting_box">
+                    <div class="o_setting_right_pane">
+                        <label for="partner_inv_global_id"/>
+                        <div class="text-muted">
+                            Cliente para Factura Global
+                        </div>
+                        <div class="content-group">
+                            <div class="mt16">
+                                <field name="partner_inv_global_id" class="o_light_label"
+                                       modifiers="{&quot;required&quot;: true}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 o_setting_box">
+                    <div class="o_setting_right_pane">
+                        <label for="journal_inv_global_id"/>
+                        <div class="text-muted">
+                            Diario para Factura Global
+                        </div>
+                        <div class="content-group">
+                            <div class="mt16">
+                                <field name="journal_inv_global_id" class="o_light_label"
+                                       modifiers="{&quot;required&quot;: true}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </xpath>
+
+        </field>
+    </record>
+
+
+</odoo>

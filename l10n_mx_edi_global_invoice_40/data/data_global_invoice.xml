@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_partner_publico_en_general" model="res.partner">
+        <field name="name">PUBLICO EN GENERAL</field>
+        <field name="country_id" ref="base.mx"/>
+        <field name="vat">XAXX010101000</field>
+        <field name="property_payment_term_id" ref="account.account_payment_term_immediate"/>
+        <field name="l10n_mx_edi_fiscal_regime">616</field>
+    </record>
+
+    <record id="product_activity_uom" model="uom.uom">
+        <field name="name">Actividad</field>
+        <field name="category_id" ref="uom.product_uom_categ_unit"/>
+        <field name="uom_type">bigger</field>
+        <field name="factor_inv" eval="1"/>
+        <field name="unspsc_code_id" search="[('code', '=', 'ACT')]"/>
+    </record>
+
+    <record id="product_global_invoice" model="product.product">
+        <field name="name">Venta</field>
+        <field name="taxes_id" search="[('type_tax_use', '=', 'sale'), ('description', '=', 'IVA(16%)'), ('l10n_mx_tax_type', '=', 'Tasa')]"/>
+        <field name="standard_price">1.0</field>
+        <field name="list_price">1.0</field>
+        <field name="type">service</field>
+        <field name="unspsc_code_id" search="[('code', '=', '01010101')]"/>
+        <field name="uom_id" ref="l10n_mx_edi_global_invoice_40.product_activity_uom"/>
+        <field name="uom_po_id" ref="l10n_mx_edi_global_invoice_40.product_activity_uom"/>
+    </record>
+</odoo>

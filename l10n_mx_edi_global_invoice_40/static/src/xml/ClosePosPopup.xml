@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="ClosePosPopupGlobal" t-inherit="point_of_sale.ClosePosPopup" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[hasclass('close-pos-popup')]" position="attributes">
+            <attribute name="style">max-height: 850px;</attribute>
+        </xpath>
+
+        <xpath expr="//div[hasclass('accept-closing')]" position="after">
+            <div class="accept-closing" t-att-class="{invisible: !hasGlobalInv()}">
+                <h3 style="margin-top: 0px;">Factura Global</h3>
+                <t t-set="_hasGlobalInv" t-value="hasGlobalInv()"/>
+                <input t-att-checked="state.acceptGlobalInv" t-att-disabled="!_hasGlobalInv" type="checkbox" id="acceptGlobal" t-model="state.acceptGlobalInv" style="all: revert;margin-right: 10px;"/>
+                <label t-att-class="{disabled: !_hasGlobalInv}" for="acceptGlobal">Crear factura global </label>
+            </div>
+        </xpath>
+    </t>
+
+</templates>
