@@ -84,6 +84,7 @@ class PosSessionInherit(models.Model):
                     data = {
                         'product_id': pos_config.product_global_id.id,
                         'name': line.name,
+                        'product_uom_id':pos_config.product_global_id.uom_id.id,
                         'quantity': 1,
                         'price_unit': amount_total,
                         'tax_ids': [(6, 0, [key])],
