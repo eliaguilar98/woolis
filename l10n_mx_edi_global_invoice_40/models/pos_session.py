@@ -6,7 +6,13 @@ from odoo import _, api, Command, fields, models
 from lxml import etree
 import logging
 import datetime
+
 _logger = logging.getLogger(__name__)
+
+class PaymentMethodPos(models.Model):
+    _inherit = "pos.payment.method"
+
+    payment_method_c = fields.Many2one('l10n_mx_edi.payment.method', string="Forma de pago")
 
 class PosSessionInherit(models.Model):
     _inherit = 'pos.session'
@@ -21,7 +27,7 @@ class PosSessionInherit(models.Model):
             return 1
         return 0
 
-    def _compute_metodo_pago_id(self,orders):
+    def _compute_metodo_pago_id(self, orders):
         l10n_mx_edi_payment_method_id = False
         for wizard in self:
             forma_pago = {}
@@ -31,17 +37,20 @@ class PosSessionInherit(models.Model):
                         forma_pago[l.payment_method_id.id] += l.amount
                     else:
                         forma_pago[l.payment_method_id.id] = l.amount
-            forma_pago_sort = sorted(forma_pago, reverse=True)
-            _logger.info("## forma pago %s",forma_pago_sort[0])
-            l10n_mx_edi_payment_method_id = self.env['pos.payment.method'].browse(forma_pago_sort[0]).payment_method_c
-            if l10n_mx_edi_payment_method_id:
-                return l10n_mx_edi_payment_method_id
+            forma_pago_sort = sorted(forma_pago.items(), key=lambda x: x[1], reverse=True)
+            pos_payment_method = forma_pago_sort[0][0]
+            pos_payment_method_id = self.env['pos.payment.method'].browse(pos_payment_method)
+            if pos_payment_method_id.payment_method_c:
+                return pos_payment_method_id.payment_method_c.id
             return False
 
     def make_invoice_global_with_uninvoiced_orders(self):
-        orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid'),('amount_total','>',0)])
-        pos_config =self.config_id
-        if pos_config and pos_config.product_global_id and pos_config.partner_global_id and pos_config.journal_global_id and pos_config.active_facturacion_global and orders and len(orders)>0:
+        _logger.info("GET ORDERS UNINVOICED %s", self)
+        orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')])
+        _logger.info("ORDERS %s", orders)
+        pos_config = self.config_id
+        _logger.info("PRODUCT GLOBAL %s, partner %s,journal %s,active_facturacion_global %s",pos_config.product_global_id,pos_config.partner_global_id,pos_config.journal_global_id,pos_config.active_facturacion_global)
+        if pos_config and pos_config.product_global_id and pos_config.partner_global_id and pos_config.journal_global_id and pos_config.active_facturacion_global:
             data_create = {
                 'move_type': "out_invoice",
                 'partner_id': pos_config.partner_global_id.id,
@@ -76,27 +85,27 @@ class PosSessionInherit(models.Model):
                             lines_groups_tax[impuesto_0.id] = [linea_pos]
 
                 for key in lines_groups_tax.keys():
-                    impuesto = self.env['account.tax'].browse(key)
-                    if impuesto and impuesto.price_include:
-                        amount_total = sum([line_pos.price_subtotal_incl for line_pos in lines_groups_tax[key]])
-                    else:
-                        amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
-                    data = {
-                        'product_id': pos_config.product_global_id.id,
-                        'name': line.name,
-                        'product_uom_id':pos_config.product_global_id.uom_id.id,
-                        'quantity': 1,
-                        'price_unit': amount_total,
-                        'tax_ids': [(6, 0, [key])],
-                        'pos_order_id': line.id,
-                    }
+                    amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
+                    if amount_total > 0:
+                        data = {
+                            'product_id': pos_config.product_global_id.id,
+                            'name': line.name,
+                            'quantity': 1,
+                            'price_unit': amount_total,
+                            'tax_ids': [(6, 0, [key])],
+                            'pos_order_id': line.id,
+                        }
 
-                    data_lines.append((0, 0, data))
+                        data_lines.append((0, 0, data))
 
             data_create['invoice_line_ids'] = data_lines
+            _logger.info("## Data Create %s", data_create)
             inv = self.env['account.move'].sudo().create(data_create)
+            _logger.info("Factura Global %s", inv)
             if inv:
+                _logger.info("TICKETS GLOBAL %s", inv.tickets_global_ids)
                 inv.tickets_global_ids = [(6, 0, [l.id for l in orders])]
+                _logger.info("TICKETS GLOBAL 2 %s", inv.tickets_global_ids)
                 inv.l10n_mx_edi_payment_policy = "PUE"
                 inv.action_post()
                 for order in orders:

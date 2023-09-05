@@ -23,7 +23,7 @@
         'report/cfdi_report_inherit.xml',
         'views/pos_order_views.xml',
         'views/pos_config_views.xml',
-        'views/pos_conf_views.xml',
+        'views/pos_payment_method.xml',
     ],
     'assets': {
         'point_of_sale.assets': [
@@ -43,7 +43,5 @@
     'installable': True,
     'auto_install': False,
     'website': 'https://www.inflexyon.mx',
-    'price': 139,
-    'currency': 'USD',
     'pre_init_hook': 'pre_init_check',
 }

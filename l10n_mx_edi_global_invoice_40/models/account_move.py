@@ -43,7 +43,10 @@ class AccountMoveInherit(models.Model):
     is_global_invoice = fields.Boolean(string="Es una factura global", default=False)
     tickets_global_ids = fields.Many2many("pos.order", string="Tickets relacionados")
     periodicidad = fields.Selection([
-        ('01', 'Diaria'),
+        ('01', 'Diario'),
+        ('02', 'Semanal'),
+        ('03', 'Quincena'),
+        ('04', 'Mensual'),
     ], 'Periodicidad',
         default='01')
     meses = fields.Selection([
@@ -61,6 +64,8 @@ class AccountMoveInherit(models.Model):
         ('12', 'Diciembre'),
     ], 'Mes')
     year = fields.Integer('Año')
+
+
 
     def button_cancel_posted_moves(self):
         res = super(AccountMoveInherit, self).button_cancel_posted_moves()
@@ -101,4 +106,5 @@ class AccountMoveInherit(models.Model):
                     ticket.state = 'invoiced'
                     ticket.account_move = rec.id
         return res
+
 

@@ -19,7 +19,7 @@ class PosConfigInherit(models.Model):
     partner_global_id = fields.Many2one("res.partner", string="Cliente Factura Global",
                                             default=lambda self: self.env['res.partner'].search(
                                                 [('name', 'ilike', 'PUBLICO EN GENERAL')], limit=1).id)
-    journal_global_id = fields.Many2one("account.journal", string="Diario Factura Global")
+    journal_global_id = fields.Many2one("account.journal", string="Diario Factura Global",domain=[('type','=','sale')])
 
 
 
