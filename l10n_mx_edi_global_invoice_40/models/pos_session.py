@@ -85,11 +85,16 @@ class PosSessionInherit(models.Model):
                             lines_groups_tax[impuesto_0.id] = [linea_pos]
 
                 for key in lines_groups_tax.keys():
-                    amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
-                    if amount_total > 0:
+                    impuesto = self.env['account.tax'].browse(key)
+                    if impuesto and impuesto.price_include:
+                        amount_total = sum([line_pos.price_subtotal_incl for line_pos in lines_groups_tax[key]])
+                    else:
+                        amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
+                    if amount_total>0:
                         data = {
                             'product_id': pos_config.product_global_id.id,
                             'name': line.name,
+                            'product_uom_id': pos_config.product_global_id.uom_id.id,
                             'quantity': 1,
                             'price_unit': amount_total,
                             'tax_ids': [(6, 0, [key])],
