@@ -11,7 +11,7 @@
                 </p>
                 <group>
                     <field name="pos_order_ids" invisible="1"/>
-                    <field name="count" attrs="{'invisible': [('count', '=', 1)]}" string="Numero de órdenes"/>
+                    <field name="count" invisible="count == 1" string="Numero de órdenes"/>
                     <field name="periodicidad" string="Periodicidad" readonly="1"/>
                     <field name="meses" string="Mes"/>
                     <field name="year" string="Año" readonly="1"/>

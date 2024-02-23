@@ -2,7 +2,7 @@
 <odoo>
     <data>
 
-        <template id="cfdiv40_global" inherit_id="l10n_mx_edi_40.cfdiv40">
+        <template id="cfdiv40_global" inherit_id="l10n_mx_edi.cfdiv40">
             <!-- Custom invoice global -->
             <xpath expr="//*[name()='cfdi:Emisor']" position="before">
                 <t t-if="record.is_global_invoice">

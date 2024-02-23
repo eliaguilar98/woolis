@@ -7,7 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//group[@id='header_right_group']" position="inside">
                 <field name="is_global_invoice" invisible="1"/>
-                <field name="tickets_global_ids" widget="many2many_tags" readonly="1" force_save="1" attrs="{'invisible':[('is_global_invoice','=',False)]}"/>
+                <field name="tickets_global_ids" 
+                widget="many2many_tags" 
+                readonly="1" force_save="1" invisible="[('is_global_invoice','=',False)]"/>
             </xpath>
         </field>
     </record>
