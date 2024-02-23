@@ -19,7 +19,7 @@
     'version': '0.1',
     #'live_test_url': "https://youtu.be/CNmOTkOoyMA",
     'category': 'Location',
-    'version': '15.0.1',
+    'version': '17.0.1',
     'price': 149,
     'currency': 'USD',
     'license': 'OPL-1',
