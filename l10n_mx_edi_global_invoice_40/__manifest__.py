@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Factura Global CFDI 4.0',
-    'version': '17.0.0.0.1',
+    'version': '17.0.0.0.2',
     'category': 'Tools',
     'author': 'INFLEXYON',
     'website': '',
