@@ -5,72 +5,56 @@
         <field name="model">pos.config</field>
         <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='accounting_section']" position="after">
-                <h2>Facturación Global</h2>
-                <div class="row mt16 o_settings_container" id="globalinv_section">
-                    <div class="col-12 col-lg-6 o_setting_box" id="active_globalinv">
-                        <div class="o_setting_left_pane">
-                            <field name="active_facturacion_global"/>
-                        </div>
-                        <div class="o_setting_right_pane">
+            <xpath expr="//setting[@id='other_devices']" position="before">
+                <!-- <h2>Facturación Global</h2> -->
+                <setting
+                        title="Permite las configuraciones de facturacion global" 
+                        id="globalinv_section" 
+                        string="Facturacion global">
+                        <field name="active_facturacion_global"/>
+                        <div class="content-group mt16">
                             <label for="active_facturacion_global"/>
                             <div class="text-muted">
                                 Activar la facturación global, en el cierre del POS
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible' : [('active_facturacion_global', '=', False)]}">
-                        <div class="o_setting_right_pane">
-
+                        <br/>
+                        <br/>
+                        <div invisible="not active_facturacion_global">
                             <div class="text-muted">
                                 Producto para Factura Global
                             </div>
                             <div class="content-group">
                                 <div class="row mt16">
-                                    <label for="product_global_id" class="col-lg-3 o_light_label"
-                                           options="{'no_open': True, 'no_create': True}"/>
-                                    <field name="product_global_id" class="o_light_label"
-                                           modifiers="{&quot;required&quot;: true}" attrs="{'required' : [('active_facturacion_global', '=', True)]}"/>
+                                    <field name="product_global_id" class="o_light_label" invisible="not active_facturacion_global"  required="active_facturacion_global"/>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible' : [('active_facturacion_global', '=', False)]}">
-                        <div class="o_setting_right_pane">
-
+                        <div invisible="not active_facturacion_global">
                             <div class="text-muted">
                                 Cliente para Factura Global
                             </div>
                             <div class="content-group">
                                 <div class="row mt16">
-                                    <label for="partner_global_id" class="col-lg-3 o_light_label"
-                                           options="{'no_open': True, 'no_create': True}"/>
-                                    <field name="partner_global_id" class="o_light_label"
-                                           modifiers="{&quot;required&quot;: true}" attrs="{'required' : [('active_facturacion_global', '=', True)]}"/>
+                                    <field name="partner_global_id" class="o_light_label" invisible="not active_facturacion_global"  required="active_facturacion_global"/>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible' : [('active_facturacion_global', '=', False)]}">
-                        <div class="o_setting_right_pane">
+                        <div invisible="not active_facturacion_global">
                             <div class="text-muted">
                                 Diario para Factura Global
                             </div>
                             <div class="content-group">
                                 <div class="row mt16">
-                                    <label for="journal_global_id" class="col-lg-3 o_light_label"
-                                           options="{'no_open': True, 'no_create': True}"/>
-                                    <field name="journal_global_id" class="o_light_label"
-                                           modifiers="{&quot;required&quot;: true}" attrs="{'required' : [('active_facturacion_global', '=', True)]}"/>
+                                    <field name="journal_global_id" class="o_light_label" required="active_facturacion_global"/>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                </setting>
 
-                </div>
             </xpath>
         </field>
     </record>

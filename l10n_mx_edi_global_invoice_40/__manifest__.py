@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Factura Global CFDI 4.0',
-    'version': '15.0.0.1',
+    'version': '17.0.0.0.1',
     'category': 'Tools',
     'author': 'INFLEXYON',
     'website': '',
@@ -12,7 +12,7 @@
     'depends': [
         'point_of_sale',
         'account',
-        'l10n_mx_edi_40',
+        'l10n_mx_edi',
     ],
     "data": [
         'data/data_global_invoice.xml',
@@ -23,15 +23,11 @@
         'report/cfdi_report_inherit.xml',
         'views/pos_order_views.xml',
         'views/pos_config_views.xml',
-        'views/pos_payment_method.xml',
     ],
     'assets': {
-        'point_of_sale.assets': [
-            'l10n_mx_edi_global_invoice_40/static/src/js/ClosePosPopup.js',
-        ],
-        'web.assets_qweb': [
-            'l10n_mx_edi_global_invoice_40/static/src/xml/ClosePosPopup.xml',
-        ],
+        'point_of_sale._assets_pos': [
+            'l10n_mx_edi_global_invoice_40/static/src/**/*',
+        ]
     },
     'images': [
         'static/description/banner.jpg',

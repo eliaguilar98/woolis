@@ -18,13 +18,9 @@ class CompanySettingsInherit(models.Model):
 class ResConfigSettingsInherit(models.TransientModel):
     _inherit = 'res.config.settings'
 
-
-    product_inv_global_id = fields.Many2one("product.product", string="Producto Factura Global", related='company_id.product_inv_global_id',
-                                  readonly=False)
-    partner_inv_global_id = fields.Many2one("res.partner", string="Cliente Factura Global", related='company_id.partner_inv_global_id',
-                                  readonly=False)
-    journal_inv_global_id = fields.Many2one("account.journal", string="Diario Factura Global", related='company_id.journal_inv_global_id',
-                                  readonly=False)
+    product_inv_global_id = fields.Many2one("product.product", string="Producto Factura Global", related='company_id.product_inv_global_id', readonly=False)
+    partner_inv_global_id = fields.Many2one("res.partner", string="Cliente Factura Global", related='company_id.partner_inv_global_id', readonly=False)
+    journal_inv_global_id = fields.Many2one("account.journal", string="Diario Factura Global", related='company_id.journal_inv_global_id', readonly=False)
 
 
 

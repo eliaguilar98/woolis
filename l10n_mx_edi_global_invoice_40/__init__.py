@@ -8,7 +8,7 @@ def pre_init_check(cr):
     from odoo.exceptions import UserError
     version_info = common.exp_version()
     server_serie = version_info.get('server_serie')
-    if '15.' not in server_serie:
+    if '17.' not in server_serie:
         raise UserError(_('Este modulo esta diseñado para odoo 15.x, encontrado %s.') %
                         server_serie)
     return True
