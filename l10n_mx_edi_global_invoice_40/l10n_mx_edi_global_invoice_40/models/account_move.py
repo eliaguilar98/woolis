@@ -102,13 +102,3 @@ class AccountMoveInherit(models.Model):
                     ticket.account_move = rec.id
         return res
 
-    def _l10n_mx_edi_add_invoice_cfdi_values(self, cfdi_values, percentage_paid=None):
-        self.ensure_one()
-        super()._l10n_mx_edi_add_invoice_cfdi_values(cfdi_values, percentage_paid=None)
-        if self.is_global_invoice:
-            cfdi_values['IsGlobalInvInflexyon'] = {
-                'i_year': self.year,
-                'i_meses': self.meses ,
-                'i_periodicidad': self.periodicidad 
-            }
-      

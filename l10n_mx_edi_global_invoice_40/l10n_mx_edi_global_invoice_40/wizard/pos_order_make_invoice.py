@@ -10,6 +10,8 @@ import datetime
 import logging
 _log = logging.getLogger("___name: %s" % __name__)
 from odoo.exceptions import ValidationError, UserError
+from itertools import groupby
+from operator import itemgetter
 
 
 class PosOrderMakeInv(models.TransientModel):
@@ -22,9 +24,14 @@ class PosOrderMakeInv(models.TransientModel):
 
 
     periodicidad = fields.Selection([
-        ('01', 'Diaria'),
+            ('01', 'Diario'),
+            ('02', 'Semanal'),
+            ('03', 'Quincenal'),
+            ('04', 'Mensual'),
         ], 'Periodicidad',
         default='01')
+
+    fecha_factura = fields.Date("Fecha de factura", default=lambda self: fields.Date.context_today(self))
     meses = fields.Selection([
         ('01', 'Enero'),
         ('02', 'Febrero'),
@@ -62,7 +69,7 @@ class PosOrderMakeInv(models.TransientModel):
         string="Diario",
         compute='_compute_journal_id',
         readonly=False,
-        store=True)
+        store=True,domain=[('type','=','sale')])
     partner_id = fields.Many2one(
         comodel_name='res.partner',
         string="Cliente",
@@ -139,34 +146,87 @@ class PosOrderMakeInv(models.TransientModel):
 
     @api.depends('company_id')
     def _compute_metodo_pago_id(self):
-        self.l10n_mx_edi_payment_method_id = False
         for wizard in self:
             forma_pago = {}
             for line in self.pos_order_ids:
                 for l in line.payment_ids:
-                    if l.payment_method_id.id in forma_pago:
-                        forma_pago[l.payment_method_id.id] += l.amount
+                    if l.payment_method_id in forma_pago:
+                        forma_pago[l.payment_method_id] += l.amount
                     else:
-                        forma_pago[l.payment_method_id.id] = l.amount
-            forma_pago_sort = sorted(forma_pago, reverse=True)
-            _log.info("Forma de pago %s", forma_pago_sort)
-            wizard.l10n_mx_edi_payment_method_id = forma_pago_sort[0]
+                        forma_pago[l.payment_method_id] = l.amount
+            if forma_pago:
+                l10n_mx_edi_payment_method_id = max(forma_pago.items(), key=lambda x: x[1])[0]
+                wizard.l10n_mx_edi_payment_method_id = l10n_mx_edi_payment_method_id.l10n_mx_edi_payment_method_id.id or False
+            else:
+                wizard.l10n_mx_edi_payment_method_id = False
+
+
+    def get_invoice_lines_from_pos_orders(self):
+        pre_invoice_line_ids = []
+
+        for order in self.pos_order_ids:
+            pre_invoice_line_ids += order._prepare_invoice_line_global(order.pos_reference)
+
+
+
+        product_uom_activity = self.product_id.uom_id
+        product_product_sell = self.product_id
+
+        grouper = itemgetter('name','tax_ids', 'discount')
+        result = []
+
+        for key, grp in groupby(sorted(pre_invoice_line_ids, key=grouper), grouper):
+            temp_dict = dict(zip(['name', 'tax_ids', 'discount'], key))
+
+            temp_dict['price_unit'] = 0
+            for item in grp:
+                temp_dict['price_unit'] += item['price_unit'] * item['quantity']
+                if 'name' not in temp_dict:
+                    temp_dict['name'] = item['name']
+
+            temp_dict['quantity'] = 1
+            temp_dict['product_id'] = product_product_sell.id
+            temp_dict['product_uom_id'] = product_uom_activity.id
+            result.append((0,None,temp_dict))
+
+        return result
 
 
     #=== ACTION METHODS ===#
 
     def create_invoices(self):
         self.ensure_one()
-        orders_incorrectas = self.pos_order_ids.filtered(lambda x: x.state != 'paid')
+        orders_incorrectas = self.pos_order_ids.filtered(lambda x: x.state not in ['paid', 'done'])
         if len(orders_incorrectas) > 0:
             str_incorrectas = ""
             for order in orders_incorrectas:
                 str_incorrectas += "\t" + str(order.name) + "\n"
-            raise ValidationError(_("¡Advertencia!, No se puede completar la operacion por que las siguientes ordenes no estan en estado pagado\n %s",str_incorrectas))
+            raise ValidationError(
+                _("¡Advertencia!, No se puede completar la operacion por que las siguientes ordenes no estan en estado pagado o publicado\n %s",
+                  str_incorrectas))
 
+        orders_refunded = self.pos_order_ids.filtered(lambda x: x.is_refunded or x.refunded_orders_count > 0)
+        if len(orders_refunded) > 0:
+            str_incorrectas = ""
+            for order in orders_refunded:
+                str_incorrectas += "\t" + str(order.name) + "\n"
+            raise ValidationError(
+                _("¡Advertencia!, No se puede completar la operacion por que las siguientes ordenes han sido reembolsadas\n %s",
+                  str_incorrectas))
+
+        orders_zero = self.pos_order_ids.filtered(lambda x: x.amount_total <= 0)
+        if len(orders_zero) > 0:
+            str_incorrectas = ""
+            for order in orders_zero:
+                str_incorrectas += "\t" + str(order.name) + "\n"
+            raise ValidationError(
+                _("¡Advertencia!, No se puede completar la operacion por que las siguientes ordenes son menores o igual a 0\n %s",
+                  str_incorrectas))
 
         data_create = {
             'move_type': "out_invoice",
+            'invoice_date': self.fecha_factura,
+            'invoice_date_due': self.fecha_factura,
             'partner_id': self.partner_id.id,
             'l10n_mx_edi_payment_method_id': self.l10n_mx_edi_payment_method_id.id,
             'l10n_mx_edi_payment_policy': "PUE",
@@ -174,44 +234,12 @@ class PosOrderMakeInv(models.TransientModel):
             'journal_id': self.journal_id.id,
             'tickets_global_ids': [(6, 0, [l.id for l in self.pos_order_ids])],
             'is_global_invoice': True,
-            'periodicidad':self.periodicidad,
-            "meses":self.meses,
-            "year":self.year,
+            'periodicidad': self.periodicidad,
+            "meses": self.meses,
+            "year": self.year,
 
         }
-        data_lines = []
-        for line in self.pos_order_ids:
-            lines_impuestos = line.lines.filtered(lambda x: x.tax_ids)
-            impuestos = []
-            impuesto_0 = self.env['account.tax'].search([('type_tax_use', '=', 'sale'), ('amount', '=', 0)], limit=1)
-            lines_groups_tax = {}
-            for linea_pos in line.lines:
-                if linea_pos.tax_ids:
-                    if linea_pos.tax_ids[0].id in lines_groups_tax:
-                        lines_groups_tax[linea_pos.tax_ids[0].id].append(linea_pos)
-                    else:
-                        lines_groups_tax[linea_pos.tax_ids[0].id] = [linea_pos]
-                else:
-                    if impuesto_0.id in lines_groups_tax:
-                        lines_groups_tax[impuesto_0.id].append(linea_pos)
-                    else:
-                        lines_groups_tax[impuesto_0.id] = [linea_pos]
-
-            for key in lines_groups_tax.keys():
-                amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
-                data = {
-                    'product_id': self.product_id.id,
-                    'name': line.name,
-                    'quantity': 1,
-                    'price_unit': amount_total,
-                    'tax_ids': [(6, 0, [key])],
-                    'pos_order_id':line.id,
-                }
-                _log.info("GROUP %s, informacion %s",key,data)
-
-                data_lines.append((0, 0, data))
-
-
+        data_lines = self.get_invoice_lines_from_pos_orders()
 
         data_create['invoice_line_ids'] = data_lines
         _log.info("## Data Create %s", data_create)
@@ -225,7 +253,7 @@ class PosOrderMakeInv(models.TransientModel):
             inv.l10n_mx_edi_payment_policy = "PUE"
             inv.action_post()
             for order in self.pos_order_ids:
-                order.sudo().write({'state':"invoiced","account_move":inv.id})
+                order.sudo().write({'state': "invoiced", "account_move": inv.id})
         action = {
             'name': _("Facturas Globales"),
             'type': 'ir.actions.act_window',

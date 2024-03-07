@@ -5,11 +5,11 @@
         <template id="cfdiv40_global" inherit_id="l10n_mx_edi.cfdiv40">
             <!-- Custom invoice global -->
             <xpath expr="//*[name()='cfdi:Emisor']" position="before">
-                <t t-if="IsGlobalInvInflexyon">
+                <t t-if="record.is_global_invoice">
                     <cfdi:InformacionGlobal xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
-                        t-att-Año="IsGlobalInvInflexyon['i_year']"
-                        t-att-Meses="IsGlobalInvInflexyon['i_meses']"
-                        t-att-Periodicidad="IsGlobalInvInflexyon['i_periodicidad']"/>
+                        t-att-Año="record.year"
+                        t-att-Meses="record.meses"
+                        t-att-Periodicidad="record.periodicidad"/>
                 </t>
 
             </xpath>

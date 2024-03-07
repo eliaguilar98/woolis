@@ -1,7 +1,8 @@
 import logging
 import decimal
 from collections import defaultdict
-
+from itertools import groupby
+from operator import itemgetter
 from odoo import _, api, Command, fields, models
 from lxml import etree
 import logging
@@ -21,21 +22,53 @@ class PosSessionInherit(models.Model):
             return 1
         return 0
 
-    def _compute_metodo_pago_id(self,orders):
-        l10n_mx_edi_payment_method_id = False
+    def _compute_metodo_pago_id(self, orders):
         for wizard in self:
             forma_pago = {}
             for line in orders:
                 for l in line.payment_ids:
-                    if l.payment_method_id.id in forma_pago:
-                        forma_pago[l.payment_method_id.id] += l.amount
+                    if l.payment_method_id in forma_pago:
+                        forma_pago[l.payment_method_id] += l.amount
                     else:
-                        forma_pago[l.payment_method_id.id] = l.amount
-            forma_pago_sort = sorted(forma_pago, reverse=True)
-            l10n_mx_edi_payment_method_id = forma_pago_sort[0]
-            if l10n_mx_edi_payment_method_id:
-                return l10n_mx_edi_payment_method_id
-            return False
+                        forma_pago[l.payment_method_id] = l.amount
+            if forma_pago:
+                l10n_mx_edi_payment_method_id = max(forma_pago.items(), key=lambda x: x[1])[0]
+                return l10n_mx_edi_payment_method_id.l10n_mx_edi_payment_method_id.id or False
+        return False
+
+
+    def get_invoice_lines_from_pos_orders(self,orders):
+        pos_config = self.config_id
+
+
+        pre_invoice_line_ids = []
+
+        for order in orders:
+            pre_invoice_line_ids += order._prepare_invoice_line_global(order.pos_reference)
+
+
+
+        product_uom_activity = pos_config.product_global_id.uom_id
+        product_product_sell = pos_config.product_global_id
+
+        grouper = itemgetter('name','tax_ids', 'discount')
+        result = []
+
+        for key, grp in groupby(sorted(pre_invoice_line_ids, key=grouper), grouper):
+            temp_dict = dict(zip(['name', 'tax_ids', 'discount'], key))
+
+            temp_dict['price_unit'] = 0
+            for item in grp:
+                temp_dict['price_unit'] += item['price_unit'] * item['quantity']
+                if 'name' not in temp_dict:
+                    temp_dict['name'] = item['name']
+
+            temp_dict['quantity'] = 1
+            temp_dict['product_id'] = product_product_sell.id
+            temp_dict['product_uom_id'] = product_uom_activity.id
+            result.append((0,None,temp_dict))
+
+        return result
 
     def make_invoice_global_with_uninvoiced_orders(self):
         orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')])
@@ -55,37 +88,7 @@ class PosSessionInherit(models.Model):
                 "year": int(datetime.datetime.now().strftime("%Y")),
 
             }
-            data_lines = []
-            for line in orders:
-                lines_impuestos = line.lines.filtered(lambda x: x.tax_ids)
-                impuestos = []
-                impuesto_0 = self.env['account.tax'].search([('type_tax_use', '=', 'sale'), ('amount', '=', 0)],
-                                                            limit=1)
-                lines_groups_tax = {}
-                for linea_pos in line.lines:
-                    if linea_pos.tax_ids:
-                        if linea_pos.tax_ids[0].id in lines_groups_tax:
-                            lines_groups_tax[linea_pos.tax_ids[0].id].append(linea_pos)
-                        else:
-                            lines_groups_tax[linea_pos.tax_ids[0].id] = [linea_pos]
-                    else:
-                        if impuesto_0.id in lines_groups_tax:
-                            lines_groups_tax[impuesto_0.id].append(linea_pos)
-                        else:
-                            lines_groups_tax[impuesto_0.id] = [linea_pos]
-
-                for key in lines_groups_tax.keys():
-                    amount_total = sum([line_pos.price_subtotal for line_pos in lines_groups_tax[key]])
-                    data = {
-                        'product_id': pos_config.product_global_id.id,
-                        'name': line.name,
-                        'quantity': 1,
-                        'price_unit': amount_total,
-                        'tax_ids': [(6, 0, [key])],
-                        'pos_order_id': line.id,
-                    }
-
-                    data_lines.append((0, 0, data))
+            data_lines = self.get_invoice_lines_from_pos_orders(orders)
 
             data_create['invoice_line_ids'] = data_lines
             inv = self.env['account.move'].sudo().create(data_create)
