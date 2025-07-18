@@ -72,6 +72,8 @@ class PosSessionInherit(models.Model):
 
     def make_invoice_global_with_uninvoiced_orders(self):
         orders = self.env['pos.order'].search([('session_id', '=', self.id), ('state', '=', 'paid')])
+        orders_refunded = orders.filtered(lambda x: x.is_refunded or x.refunded_orders_count > 0 or x.amount_paid <0)
+        orders = orders - orders_refunded
         pos_config =self.config_id
         if pos_config and pos_config.product_global_id and pos_config.partner_global_id and pos_config.journal_global_id and pos_config.active_facturacion_global:
             data_create = {
